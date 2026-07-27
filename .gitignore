@@ -9,6 +9,10 @@ env/
 # Downloads & Temp Contract Note PDFs
 downloads/*.pdf
 
+# Generated Excel Trade Ledgers
+trades/
+*.xlsx
+
 # Logs
 logs/
 *.log
