@@ -1,0 +1,23 @@
+# Credentials & Local Configuration
+.env
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Downloads & Temp Contract Note PDFs
+downloads/*.pdf
+
+# Logs
+logs/
+*.log
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE & Editor Settings
+.vscode/
+.idea/
