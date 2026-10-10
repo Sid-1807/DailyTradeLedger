@@ -52,10 +52,17 @@ def fetch_contract_notes_range(start_date: date, end_date: date):
         before_dt = end_date + timedelta(days=1)
         before_str = before_dt.strftime("%d-%b-%Y")
         
-        search_criterion = f'(SINCE "{since_str}" BEFORE "{before_str}")'
+        # Build server-side search criteria for fast lookup
+        search_terms = [f'SINCE "{since_str}"', f'BEFORE "{before_str}"']
+        if config.SENDER_EMAIL:
+            search_terms.append(f'FROM "{config.SENDER_EMAIL}"')
+        if config.SUBJECT_KEYWORD:
+            search_terms.append(f'SUBJECT "{config.SUBJECT_KEYWORD}"')
+        
+        search_criterion = f'({" ".join(search_terms)})'
         logger.info(f"Searching IMAP emails with criterion: {search_criterion}")
         
-        status, messages = mail.search(None, search_criterion)
+        status, messages = mail.search(None, *search_terms)
         if status != "OK" or not messages[0]:
             logger.info("No messages found matching search criterion.")
             return downloaded_files
