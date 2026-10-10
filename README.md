@@ -11,9 +11,9 @@ An automated Python CLI agent that connects to Gmail via IMAP, retrieves daily s
   - Restricts search strictly to `custcare@idbicapital.com` with email subject containing `"Common Contract Note"`.
   - Downloads **only PDF attachments** (`.pdf`), ignoring all marketing/statement emails and non-PDF files.
 - 🔓 **Encrypted PDF Reader**: Automatically decrypts password-protected PDF contract notes (e.g. using PAN number).
-- 📊 **Financial Year Excel Ledgers**:
-  - Automatically calculates Indian Financial Year (e.g., Apr 1, 2026 – Mar 31, 2027 $\rightarrow$ `FY2026-27`).
-  - Maintains separate workbooks: `Buy_Trades_FY2026-27.xlsx` and `Sell_Trades_FY2026-27.xlsx`.
+- 📊 **Quarterly & Financial Year Excel Ledgers**:
+  - Automatically calculates Quarter and Indian Financial Year (e.g., Apr–Jun $\rightarrow$ `Q1`, Jul–Sep $\rightarrow$ `Q2`, Oct–Dec $\rightarrow$ `Q3`, Jan–Mar $\rightarrow$ `Q4`).
+  - Maintains separate workbooks per quarter: `Buy_Trades_Q1_FY2026-27.xlsx`, `Sell_Trades_Q1_FY2026-27.xlsx`, `Buy_Trades_Q2_FY2026-27.xlsx`, `Sell_Trades_Q2_FY2026-27.xlsx`, etc.
 - 🎨 **Excel Formatting & Styling**:
   - Dates formatted as `dd-mm-yy`.
   - Order numbers & Trade numbers explicitly saved as Text (`@`) to prevent scientific notation.

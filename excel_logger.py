@@ -25,10 +25,10 @@ COLUMNS = [
     "Contract Note File"
 ]
 
-def get_excel_filepath(action: str, fy_string: str) -> str:
-    """Returns absolute file path for Buy or Sell workbook for the given financial year."""
+def get_excel_filepath(action: str, q_string: str, fy_string: str) -> str:
+    """Returns absolute file path for Buy or Sell workbook for the given quarter and financial year."""
     prefix = "Buy_Trades" if action.upper() == "BUY" else "Sell_Trades"
-    filename = f"{prefix}_{fy_string}.xlsx"
+    filename = f"{prefix}_{q_string}_{fy_string}.xlsx"
     return os.path.join(config.TRADES_DIR, filename)
 
 def clean_str(val) -> str:
@@ -52,7 +52,7 @@ def load_existing_trade_keys(file_path: str) -> set:
 
         keys = set()
         for _, row in df.iterrows():
-            trade_date = clean_str(row.get("Trade Date"))
+            trade_date = clean_str(row.get("Trade Date"))[:10] # Standardize to YYYY-MM-DD
             if trade_date == "TOTAL":
                 continue
             order_no = clean_str(row.get("Order No"))
@@ -66,7 +66,7 @@ def load_existing_trade_keys(file_path: str) -> set:
         logger.warning(f"Error reading existing keys from {file_path}: {e}")
         return set()
 
-def style_excel_workbook(file_path: str, action: str, fy_string: str):
+def style_excel_workbook(file_path: str, action: str, q_string: str, fy_string: str):
     """Applies beautiful styling, currency formatting, auto column widths, and total row."""
     wb = openpyxl.load_workbook(file_path)
     ws = wb.active
@@ -98,7 +98,7 @@ def style_excel_workbook(file_path: str, action: str, fy_string: str):
     # Apply Title Row (Row 1)
     ws.merge_cells("A1:L1")
     title_cell = ws["A1"]
-    title_cell.value = f"{'BUY' if is_buy else 'SELL'} TRADES LEDGER - {fy_string}"
+    title_cell.value = f"{'BUY' if is_buy else 'SELL'} TRADES LEDGER - {q_string} {fy_string}"
     title_cell.font = title_font
     title_cell.fill = title_fill
     title_cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -202,7 +202,7 @@ def style_excel_workbook(file_path: str, action: str, fy_string: str):
 
 def log_trades_to_excel(trades: list):
     """
-    Groups trades by Financial Year and Action (BUY / SELL),
+    Groups trades by Quarter, Financial Year, and Action (BUY / SELL),
     and appends new trades into Excel files.
     """
     if not trades:
@@ -211,7 +211,7 @@ def log_trades_to_excel(trades: list):
 
     added_count = 0
 
-    # Group trades by (FY, Action)
+    # Group trades by (Q, FY, Action)
     grouped = {}
     for t in trades:
         try:
@@ -219,22 +219,23 @@ def log_trades_to_excel(trades: list):
         except Exception:
             dt = datetime.now()
         
-        fy_str = config.get_financial_year(dt)
+        q_str, fy_str = config.get_quarter_and_fy(dt)
         act = t["action"].upper()
-        key = (fy_str, act)
+        key = (q_str, fy_str, act)
         
         if key not in grouped:
             grouped[key] = []
         grouped[key].append(t)
 
-    for (fy_str, action), trade_list in grouped.items():
-        file_path = get_excel_filepath(action, fy_str)
+    for (q_str, fy_str, action), trade_list in grouped.items():
+        file_path = get_excel_filepath(action, q_str, fy_str)
         existing_keys = load_existing_trade_keys(file_path)
 
         new_trade_rows = []
         for t in trade_list:
+            t_date_std = str(t["trade_date"]).strip()[:10]
             trade_key = (
-                str(t["trade_date"]).strip(),
+                t_date_std,
                 str(t["order_no"]).strip(),
                 str(t["trade_no"]).strip(),
                 str(t["symbol"]).strip(),
@@ -258,7 +259,7 @@ def log_trades_to_excel(trades: list):
                 existing_keys.add(trade_key)
 
         if not new_trade_rows:
-            logger.info(f"All {len(trade_list)} {action} trades for {fy_str} already exist in Excel. Skipping.")
+            logger.info(f"All {len(trade_list)} {action} trades for {q_str} {fy_str} already exist in Excel. Skipping.")
             continue
 
         # Load existing df or create new
@@ -285,7 +286,7 @@ def log_trades_to_excel(trades: list):
             combined_df.to_excel(writer, startrow=2, index=False)
 
         # Apply styling & auto-formatting
-        style_excel_workbook(file_path, action, fy_str)
+        style_excel_workbook(file_path, action, q_str, fy_str)
         added_count += len(new_trade_rows)
         logger.info(f"Successfully added {len(new_trade_rows)} new {action} trades to {file_path}.")
 
